@@ -46,7 +46,7 @@ jobs:
       - name: Report error
         if: ${{ steps.mail-sender.outcome != 'success' }}
         run: |
-            gh pr comment ${{ github.event.pull_request.number }} --body ${{ format('{0}@{1} did not pass the check.', github.event.pull_request.user.login, github.event.pull_request.head.sha) }}
+            gh pr comment ${{ github.event.pull_request.number }} --body ${{ format('"{0}@{1} did not pass the check."', github.event.pull_request.user.login, github.event.pull_request.head.sha) }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report success and close
