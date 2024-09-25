@@ -2,33 +2,44 @@ name: Checker
 
 on:
   pull_request_target:
-    branches: [ "main" ]
+    branches: [ main ]
     types: [ opened, synchronize ]
 
 jobs:
   check:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout files
+        uses: actions/checkout@v4
         with:
-          ref: ${{github.event.pull_request.head.sha}}
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Read mail address
         id: mail-addr-reader
         run: echo "MAILER_TO=`cat mail.txt`" >> "$GITHUB_OUTPUT"
       - name: Send mail
+        id: mail-sender
         uses: dawidd6/action-send-mail@v3.12.0
         with:
-          server_address: ${{secrets.MAILER_SERVER}}
+          server_address: ${{ secrets.MAILER_SERVER }}
           server_port: 465
           secure: true
-          username: ${{secrets.MAILER_USERNAME}}
-          password: ${{secrets.MAILER_PASSWORD}}
-          subject: Flag for ${{github.event.pull_request.user.login}}
-          to: ${{steps.mail-addr-reader.outputs.MAILER_TO}}
-          from: ${{secrets.MAILER_FROM}}
-          body: ${{secrets.FLAG}}
-      - name: Close PR
-        if: always()
-        run: gh pr close ${{github.event.pull_request.number}}
+          username: ${{ secrets.MAILER_USERNAME }}
+          password: ${{ secrets.MAILER_PASSWORD }}
+          subject: Flag for ${{ github.event.pull_request.user.login }}
+          to: ${{ steps.mail-addr-reader.outputs.MAILER_TO }}
+          from: ${{ secrets.MAILER_FROM }}
+          body: ${{ secrets.FLAG }}
+      - name: Report error
+        if: ${{ steps.mail-sender.conclusion != "success" }}
+        run: |
+            gh pr comment ${{ github.event.pull_request.number }} -b ${{ format('{0}@{1} did not pass the check.', github.event.pull_request.user.login, github.event.pull_request.head.sha) }}
         env:
-          GH_TOKEN: ${{secrets.GH_REPO_TOKEN}}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Report success and close
+        if: ${{ steps.mail-sender.conclusion == "success" }}
+        run: |
+            gh pr close ${{ github.event.pull_request.number }} --comment gh pr comment ${{ github.event.pull_request.number }} -b "Good job! Check your inbox for flag."
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
