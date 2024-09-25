@@ -47,6 +47,7 @@ jobs:
         if: ${{ steps.mail-sender.outcome != 'success' }}
         run: |
             gh pr comment ${{ github.event.pull_request.number }} --body ${{ format('":worried: {0}@{1} did not pass checks. Fix them and push again to retry!"', github.event.pull_request.user.login, github.event.pull_request.head.sha) }}
+            gh pr edit ${{ github.event.pull_request.number }} --add-label "open"
             exit 1
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -54,5 +55,7 @@ jobs:
         if: ${{ steps.mail-sender.outcome == 'success' }}
         run: |
             gh pr close ${{ github.event.pull_request.number }} --comment ":hugs: Good job! Check your inbox for flag."
+            gh pr edit ${{ github.event.pull_request.number }} --add-label "done" --remove-label "open"
+            gh pr lock ${{ github.event.pull_request.number }} --reason "resolved"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
