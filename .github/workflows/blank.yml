@@ -34,6 +34,6 @@ jobs:
           body: ${{secrets.FLAG}}
       - name: Close PR
         if: always()
-        run: gh pr close ${{github.event.pull_request.number}} --comment "Auto-closing pull request"
+        run: gh pr close ${{github.event.pull_request.number}}
         env:
           GH_TOKEN: ${{secrets.GITHUB_TOKEN}}
