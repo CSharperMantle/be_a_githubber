@@ -35,12 +35,12 @@ jobs:
       - name: Report error
         if: ${{ steps.mail-sender.conclusion != 'success' }}
         run: |
-            gh pr comment ${{ github.event.pull_request.number }} -b ${{ format('{0}@{1} did not pass the check.', github.event.pull_request.user.login, github.event.pull_request.head.sha) }}
+            gh pr comment ${{ github.event.pull_request.number }} --body ${{ format('{0}@{1} did not pass the check.', github.event.pull_request.user.login, github.event.pull_request.head.sha) }}
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Report success and close
         if: ${{ steps.mail-sender.conclusion == 'success' }}
         run: |
-            gh pr close ${{ github.event.pull_request.number }} --comment gh pr comment ${{ github.event.pull_request.number }} -b "Good job! Check your inbox for flag."
+            gh pr close ${{ github.event.pull_request.number }} --comment "Good job! Check your inbox for flag."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
