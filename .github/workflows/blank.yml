@@ -40,4 +40,3 @@ jobs:
           to: ${{steps.mail-reader.outputs.MAILER_TO}}
           from: ${{secrets.MAILER_FROM}}
           body: Test
-          contentType: text/plain
