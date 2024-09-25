@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - name: Check mail address format
+      - name: Run checks
         id: mail-addr-checker
         env:
           PAT: '^[a-zA-Z0-9_!#$%&''*+/=?`{|}~^.-]+@[a-zA-Z0-9.-]+$'
@@ -43,15 +43,16 @@ jobs:
           to: ${{ steps.mail-addr-reader.outputs.MAILER_TO }}
           from: ${{ secrets.MAILER_FROM }}
           body: ${{ secrets.FLAG }}
-      - name: Report error
+      - name: Report failure
         if: ${{ steps.mail-sender.outcome != 'success' }}
         run: |
-            gh pr comment ${{ github.event.pull_request.number }} --body ${{ format('"{0}@{1} did not pass the check."', github.event.pull_request.user.login, github.event.pull_request.head.sha) }}
+            gh pr comment ${{ github.event.pull_request.number }} --body ${{ format('":worried: {0}@{1} did not pass checks. Fix them and push again to retry!"', github.event.pull_request.user.login, github.event.pull_request.head.sha) }}
+            exit 1
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Report success and close
+      - name: Report success and close PR
         if: ${{ steps.mail-sender.outcome == 'success' }}
         run: |
-            gh pr close ${{ github.event.pull_request.number }} --comment "Good job! Check your inbox for flag."
+            gh pr close ${{ github.event.pull_request.number }} --comment ":hugs: Good job! Check your inbox for flag."
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
