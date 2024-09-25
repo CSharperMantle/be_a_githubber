@@ -13,21 +13,13 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  send:
-    # The type of runner that the job will run on
+  check:
     runs-on: ubuntu-latest
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v4
-
-      # Runs a single command using the runners shell
       - name: Read mail address
-        id: mail-reader
+        id: mail-addr-reader
         run: echo "MAILER_TO=`cat mail.txt`" >> "$GITHUB_OUTPUT"
-
       - name: Send mail
         uses: dawidd6/action-send-mail@v3.12.0
         with:
@@ -36,8 +28,12 @@ jobs:
           secure: true
           username: ${{secrets.MAILER_USERNAME}}
           password: ${{secrets.MAILER_PASSWORD}}
-          subject: Flag
-          to: ${{steps.mail-reader.outputs.MAILER_TO}}
+          subject: Flag for ${{github.event.pull_request.user.login}}
+          to: ${{steps.mail-addr-reader.outputs.MAILER_TO}}
           from: ${{secrets.MAILER_FROM}}
-          body: Test
-          nodemailerdebug: true
+          body: ${{secrets.FLAG}}
+      - name: Close PR
+        if: always()
+        run: gh pr close --comment "Auto-closing pull request"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
